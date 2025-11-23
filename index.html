@@ -1,0 +1,571 @@
+<!DOCTYPE html>
+<html lang="da">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Julegaveudtrækning</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            min-height: 100vh;
+            background: linear-gradient(135deg, #0f2027 0%, #203a43 50%, #2c5364 100%);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 16px;
+            overflow-x: hidden;
+        }
+
+        .container {
+            background: rgba(255, 255, 255, 0.98);
+            backdrop-filter: blur(10px);
+            border-radius: 24px;
+            padding: clamp(24px, 5vw, 48px);
+            box-shadow: 0 24px 48px rgba(0, 0, 0, 0.2),
+                        0 8px 16px rgba(0, 0, 0, 0.1);
+            max-width: 500px;
+            width: 100%;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .container::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: linear-gradient(90deg, #c41e3a 0%, #165b33 50%, #c41e3a 100%);
+            background-size: 200% 100%;
+            animation: shimmer 3s linear infinite;
+        }
+
+        @keyframes shimmer {
+            0% { background-position: 200% 0; }
+            100% { background-position: -200% 0; }
+        }
+
+        h1 {
+            text-align: center;
+            background: linear-gradient(135deg, #0f2027 0%, #2c5364 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 8px;
+            font-size: clamp(1.75rem, 6vw, 2.5rem);
+            font-weight: 700;
+            letter-spacing: -0.02em;
+        }
+
+        .subtitle {
+            text-align: center;
+            color: #64748b;
+            margin-bottom: clamp(24px, 5vw, 40px);
+            font-size: clamp(0.95rem, 3vw, 1.1rem);
+            line-height: 1.5;
+            font-weight: 500;
+        }
+
+        .names-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+            gap: 12px;
+            margin-bottom: 0;
+        }
+
+        @media (max-width: 480px) {
+            .names-grid {
+                grid-template-columns: 1fr;
+                gap: 10px;
+            }
+        }
+
+        .name-button {
+            padding: 18px 24px;
+            font-size: clamp(1.05rem, 3.5vw, 1.25rem);
+            border: 2px solid transparent;
+            background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+            color: #1e293b;
+            border-radius: 16px;
+            cursor: pointer;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            font-weight: 600;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+            position: relative;
+            overflow: hidden;
+            min-height: 60px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .name-button::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(135deg, #c41e3a 0%, #a01829 100%);
+            opacity: 0;
+            transition: opacity 0.3s ease;
+            z-index: 0;
+        }
+
+        .name-button span {
+            position: relative;
+            z-index: 1;
+        }
+
+        @media (hover: hover) {
+            .name-button:hover {
+                transform: translateY(-2px);
+                box-shadow: 0 8px 24px rgba(196, 30, 58, 0.25);
+                border-color: #c41e3a;
+            }
+
+            .name-button:hover::before {
+                opacity: 1;
+            }
+
+            .name-button:hover {
+                color: white;
+            }
+        }
+
+        .name-button:active {
+            transform: translateY(0);
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+        }
+
+        .result {
+            display: none;
+            text-align: center;
+            padding: clamp(24px, 5vw, 40px);
+            background: linear-gradient(135deg, #fef2f2 0%, #fef8f8 100%);
+            border-radius: 20px;
+            border: 2px solid #fecaca;
+        }
+
+        .result.show {
+            display: block;
+            animation: fadeInUp 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px) scale(0.95);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0) scale(1);
+            }
+        }
+
+        .result-name {
+            font-size: clamp(1.75rem, 6vw, 2.5rem);
+            background: linear-gradient(135deg, #c41e3a 0%, #991b2e 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            font-weight: 800;
+            margin: 20px 0;
+            line-height: 1.2;
+        }
+
+        .result-text {
+            font-size: clamp(1.05rem, 3.5vw, 1.25rem);
+            color: #64748b;
+            margin: 10px 0;
+            font-weight: 500;
+        }
+
+        .back-button {
+            margin-top: 24px;
+            padding: 14px 32px;
+            background: linear-gradient(135deg, #0f2027 0%, #2c5364 100%);
+            color: white;
+            border: none;
+            border-radius: 12px;
+            cursor: pointer;
+            font-size: clamp(0.95rem, 3vw, 1.05rem);
+            font-weight: 600;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            box-shadow: 0 4px 12px rgba(15, 32, 39, 0.3);
+            min-height: 48px;
+        }
+
+        @media (hover: hover) {
+            .back-button:hover {
+                transform: translateY(-2px);
+                box-shadow: 0 8px 20px rgba(15, 32, 39, 0.4);
+            }
+        }
+
+        .back-button:active {
+            transform: translateY(0);
+        }
+
+        .snowflake {
+            position: fixed;
+            color: rgba(255, 255, 255, 0.7);
+            font-size: 1.5em;
+            pointer-events: none;
+            z-index: -1;
+        }
+
+        .info-button {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #f1f5f9 0%, #e2e8f0 100%);
+            border: none;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            font-size: 1.1rem;
+            color: #64748b;
+            transition: all 0.3s ease;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+        }
+
+        @media (hover: hover) {
+            .info-button:hover {
+                transform: scale(1.1);
+                background: linear-gradient(135deg, #c41e3a 0%, #a01829 100%);
+                color: white;
+            }
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.7);
+            backdrop-filter: blur(4px);
+            z-index: 1000;
+            padding: 16px;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal.show {
+            display: flex;
+            animation: fadeIn 0.3s ease;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        .modal-content {
+            background: white;
+            border-radius: 20px;
+            padding: 32px;
+            max-width: 450px;
+            width: 100%;
+            box-shadow: 0 24px 48px rgba(0, 0, 0, 0.3);
+            animation: slideUp 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            max-height: 90vh;
+            overflow-y: auto;
+        }
+
+        @keyframes slideUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px) scale(0.95);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0) scale(1);
+            }
+        }
+
+        .modal-header {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: #1e293b;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+
+        .modal-section {
+            margin-bottom: 24px;
+        }
+
+        .modal-section h3 {
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: #c41e3a;
+            margin-bottom: 12px;
+        }
+
+        .modal-section p {
+            color: #64748b;
+            line-height: 1.6;
+            margin-bottom: 8px;
+        }
+
+        .modal-section ul {
+            list-style: none;
+            padding: 0;
+        }
+
+        .modal-section li {
+            color: #64748b;
+            padding: 8px 0;
+            border-bottom: 1px solid #f1f5f9;
+        }
+
+        .modal-section li:last-child {
+            border-bottom: none;
+        }
+
+        .modal-close {
+            width: 100%;
+            padding: 14px;
+            background: linear-gradient(135deg, #0f2027 0%, #2c5364 100%);
+            color: white;
+            border: none;
+            border-radius: 12px;
+            cursor: pointer;
+            font-size: 1rem;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            margin-top: 20px;
+        }
+
+        @media (hover: hover) {
+            .modal-close:hover {
+                transform: translateY(-2px);
+                box-shadow: 0 8px 20px rgba(15, 32, 39, 0.4);
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <button class="info-button" onclick="showModal()" aria-label="Regler">ℹ</button>
+        <h1>🎄 Julegaveudtrækning 🎄</h1>
+        <p class="subtitle">Klik på dit navn for at se, hvem du skal give gave til</p>
+
+        <div class="names-grid" id="namesGrid"></div>
+
+        <div class="result" id="result">
+            <p class="result-text">Du skal give gave til:</p>
+            <div class="result-name" id="resultName"></div>
+            <button class="back-button" onclick="goBack()">Tilbage</button>
+        </div>
+    </div>
+
+    <div class="modal" id="modal" onclick="closeModalOnBackdrop(event)">
+        <div class="modal-content">
+            <div class="modal-header">📜 Regler for julegaveudtrækningen</div>
+
+            <div class="modal-section">
+                <h3>🎁 Sådan fungerer det</h3>
+                <p>Hver person klikker på sit navn og får at vide, hvem de skal give en julegave til. Fordelingen er blind for alle - selv mig!</p>
+            </div>
+
+            <div class="modal-section">
+                <h3>🚫 Begrænsninger</h3>
+                <p>Følgende par kan ikke give gaver til hinanden:</p>
+                <ul>
+                    <li>Malene ↔ Jakob</li>
+                    <li>Will ↔ Lisbeth</li>
+                    <li>Maud ↔ Christian</li>
+                    <li>Poul → Helle (Poul kan ikke give til Helle)</li>
+                </ul>
+            </div>
+
+            <div class="modal-section">
+                <h3>💝 Helle</h3>
+                <p>Helle modtager kun gaver. En tilfældig person vil få tildelt Helle som ekstra modtager (udover deres almindelige modtager).</p>
+            </div>
+
+            <div class="modal-section">
+                <h3>🤫 Hemmelighed</h3>
+                <p>Hold dit resultat hemmeligt! Del ikke hvem du skal give gave til med andre.</p>
+            </div>
+
+            <button class="modal-close" onclick="closeModal()">Forstået</button>
+        </div>
+    </div>
+
+    <script>
+        const participants = ['Poul', 'Will', 'Lisbeth', 'Jakob', 'Malene', 'Maud', 'Christian'];
+        const receiver = 'Helle';
+
+        const forbiddenPairs = {
+            'Malene': ['Jakob'],
+            'Jakob': ['Malene'],
+            'Will': ['Lisbeth'],
+            'Lisbeth': ['Will'],
+            'Maud': ['Christian'],
+            'Christian': ['Maud'],
+            'Poul': ['Helle']
+        };
+
+        function isValidAssignment(giver, receiverName) {
+            if (giver === receiverName) return false;
+            if (forbiddenPairs[giver] && forbiddenPairs[giver].includes(receiverName)) {
+                return false;
+            }
+            return true;
+        }
+
+        class SeededRandom {
+            constructor(seed) {
+                this.seed = seed;
+            }
+
+            next() {
+                this.seed = (this.seed * 9301 + 49297) % 233280;
+                return this.seed / 233280;
+            }
+        }
+
+        const FIXED_SEED = 12345;
+
+        function getCurrentSeed() {
+            return FIXED_SEED;
+        }
+
+        function seededShuffle(array, seed) {
+            const rng = new SeededRandom(seed);
+            const shuffled = [...array];
+
+            for (let i = shuffled.length - 1; i > 0; i--) {
+                const j = Math.floor(rng.next() * (i + 1));
+                [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+            }
+
+            return shuffled;
+        }
+
+        function createAssignments(seed) {
+            const rng = new SeededRandom(seed);
+            let assignments = {};
+            let receivers = [...participants];
+            let givers = [...participants];
+
+            receivers = seededShuffle(receivers, seed);
+
+            for (let giver of givers) {
+                let validReceivers = receivers.filter(r =>
+                    !Object.values(assignments).includes(r) &&
+                    isValidAssignment(giver, r)
+                );
+
+                if (validReceivers.length === 0) {
+                    return createAssignments(seed + 1);
+                }
+
+                const receiverIndex = Math.floor(rng.next() * validReceivers.length);
+                assignments[giver] = validReceivers[receiverIndex];
+            }
+
+            const eligibleForHelle = givers.filter(g => g !== 'Poul');
+            const luckyPersonIndex = Math.floor(rng.next() * eligibleForHelle.length);
+            const luckyPerson = eligibleForHelle[luckyPersonIndex];
+            assignments[luckyPerson] = assignments[luckyPerson] + ' og ' + receiver;
+
+            return assignments;
+        }
+
+        let currentAssignments = {};
+
+        function initializeAssignments() {
+            const seed = getCurrentSeed();
+            currentAssignments = createAssignments(seed);
+            console.log('Seed:', seed);
+        }
+
+        function renderNames() {
+            const grid = document.getElementById('namesGrid');
+            grid.innerHTML = '';
+
+            participants.forEach(name => {
+                const button = document.createElement('button');
+                button.className = 'name-button';
+                const span = document.createElement('span');
+                span.textContent = name;
+                button.appendChild(span);
+                button.onclick = () => showResult(name);
+                grid.appendChild(button);
+            });
+        }
+
+        function showResult(giver) {
+            const receiver = currentAssignments[giver];
+            document.getElementById('resultName').textContent = receiver;
+            document.getElementById('namesGrid').style.display = 'none';
+            document.getElementById('result').classList.add('show');
+        }
+
+        function goBack() {
+            document.getElementById('namesGrid').style.display = 'grid';
+            document.getElementById('result').classList.remove('show');
+        }
+
+        function showModal() {
+            document.getElementById('modal').classList.add('show');
+            document.body.style.overflow = 'hidden';
+        }
+
+        function closeModal() {
+            document.getElementById('modal').classList.remove('show');
+            document.body.style.overflow = '';
+        }
+
+        function closeModalOnBackdrop(event) {
+            if (event.target.id === 'modal') {
+                closeModal();
+            }
+        }
+
+        initializeAssignments();
+        renderNames();
+
+        function createSnowflake() {
+            const snowflake = document.createElement('div');
+            snowflake.className = 'snowflake';
+            snowflake.textContent = '❄';
+            snowflake.style.left = Math.random() * window.innerWidth + 'px';
+            snowflake.style.top = '-20px';
+            snowflake.style.animationDuration = (Math.random() * 3 + 2) + 's';
+            document.body.appendChild(snowflake);
+
+            const fall = snowflake.animate([
+                { transform: 'translateY(0px)', opacity: 1 },
+                { transform: `translateY(${window.innerHeight + 20}px)`, opacity: 0 }
+            ], {
+                duration: (Math.random() * 3000 + 2000),
+                easing: 'linear'
+            });
+
+            fall.onfinish = () => snowflake.remove();
+        }
+
+        setInterval(createSnowflake, 800);
+    </script>
+</body>
+</html>
